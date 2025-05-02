@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Shopping List</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --danger-color: #e74c3c;
+            --danger-hover: #c0392b;
+            --success-color: #2ecc71;
+            --gray-color: #95a5a6;
+            --light-gray: #ecf0f1;
+            --dark-gray: #7f8c8d;
+            --white: #ffffff;
+            --black: #2c3e50;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --item-spacing: 8px;
+            
+            /* Dark mode variables */
+            --bg-color: #f5f5f5;
+            --text-color: #2c3e50;
+            --container-bg: #ffffff;
+            --item-bg: #ffffff;
+            --border-color: #eee;
+            --input-bg: #ffffff;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --container-bg: #2d2d2d;
+            --item-bg: #3d3d3d;
+            --border-color: #444;
+            --input-bg: #3d3d3d;
+            --white: #2d2d2d;
+            --light-gray: #444;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        #app {
+            max-width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .container {
+            background: var(--container-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        #auth-container, #list-container {
+            display: none;
+        }
+        
+        input, button, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 16px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            transition: all 0.3s;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.delete-btn {
+            background-color: transparent;
+            color: var(--danger-color);
+            margin-left: auto;
+            padding: 6px;
+            width: auto;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button.delete-btn:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger-hover);
+        }
+
+        button.delete-store-btn {
+            background-color: transparent;
+            color: var(--danger-color);
+            padding: 2px 6px;
+            margin-left: 8px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+        }
+        
+        button.delete-store-btn:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        #signout-btn {
+            background-color: var(--gray-color);
+            width: auto;
+            float: right;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        
+        #signout-btn:hover {
+            background-color: var(--dark-gray);
+        }
+        
+        #auth-message {
+            color: var(--danger-color);
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        /* Store Tabs */
+        .store-tabs {
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            gap: 8px;
+            scrollbar-width: none;
+        }
+        
+        .store-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .store-tab {
+            padding: 10px 18px;
+            background: var(--light-gray);
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        
+        .store-tab:hover {
+            background: var(--dark-gray);
+        }
+        
+        .store-tab.active {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+        
+        .store-tab img {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+        }
+        
+        /* Store Content */
+        .store-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .store-content.active {
+            display: block;
+        }
+        
+        /* View All Toggle */
+        .view-all-toggle {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            gap: 10px;
+        }
+        
+        .view-all-toggle label {
+            font-weight: 600;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray-color);
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Item List */
+        .item-list {
+            max-height: 50vh;
+            overflow-y: auto;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: var(--container-bg);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.05);
+            padding: 5px;
+        }
+        
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .list-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .item-count {
+            background: var(--light-gray);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* Shopping Items */
+        .shopping-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .item {
+            padding: 12px 15px;
+            margin-bottom: var(--item-spacing);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            background: var(--item-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+        
+        .item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .item-checkbox {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--gray-color);
+            border-radius: 6px;
+            margin-right: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            background-color: var(--input-bg);
+        }
+        
+        .item-checkbox:checked {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .item-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .item-details {
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+        
+        .item-text {
+            word-break: break-word;
+            font-size: 1.05rem;
+            margin-bottom: 4px;
+        }
+        
+        .item-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: var(--gray-color);
+        }
+        
+        .item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .item-quantity input {
+            width: 50px;
+            padding: 4px;
+            text-align: center;
+            margin: 0;
+        }
+        
+        .item-remarks {
+            font-style: italic;
+            color: var(--gray-color);
+        }
+        
+        .item.checked .item-text,
+        .item.checked .item-remarks,
+        .item.checked .item-meta {
+            text-decoration: line-through;
+            color: var(--gray-color);
+            opacity: 0.8;
+        }
+        
+        .item.checked {
+            background: var(--light-gray);
+            border-color: var(--border-color);
+        }
+        
+        /* Add Item Form */
+        .add-item-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .add-item-form input, 
+        .add-item-form textarea {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            min-width: 100%;
+        }
+        
+        .add-item-form input:focus,
+        .add-item-form textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        .add-item-form .form-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .add-item-form .form-group {
+            flex: 1;
+        }
+        
+        .add-item-form button {
+            width: auto;
+            min-width: 80px;
+            padding: 12px 20px;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--gray-color);
+        }
+        
+        .empty-state img {
+            width: 80px;
+            opacity: 0.6;
+            margin-bottom: 15px;
+        }
+        
+        .empty-state p {
+            margin: 10px 0 0;
+            font-size: 1.1rem;
+        }
+        
+        /* Clear all button */
+        .clear-all-btn {
+            background-color: var(--danger-color);
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+        }
+        
+        .clear-all-btn:hover {
+            background-color: var(--danger-hover);
+        }
+        
+        /* Loading indicator */
+        .loading {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--dark-gray);
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-color);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Dark mode toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            #app {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+            }
+            
+            input, button, select, textarea {
+                padding: 10px 12px;
+            }
+            
+            .item-list {
+                max-height: 55vh;
+            }
+            
+            .item {
+                padding: 10px 12px;
+            }
+            
+            .add-item-form button {
+                min-width: 70px;
+                padding: 10px 15px;
+            }
+            
+            .dark-mode-toggle {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Advanced Shopping List</h1>
+        
+        <div id="auth-container" class="container">
+            <h2>Sign In</h2>
+            <input type="email" id="email" placeholder="Email" autocomplete="username">
+            <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+            <button id="signin-btn">Sign In</button>
+            <button id="signup-btn">Sign Up</button>
+            <p id="auth-message"></p>
+        </div>
+        
+        <div id="list-container" class="container">
+            <button id="signout-btn">Sign Out</button>
+            <h2>My Shopping Lists</h2>
+            
+            <div class="view-all-toggle">
+                <label for="view-all">View All Items:</label>
+                <label class="switch">
+                    <input type="checkbox" id="view-all">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="store-tabs" id="store-tabs">
+                <!-- Tabs will be generated dynamically -->
+            </div>
+            
+            <div id="store-contents">
+                <!-- Store contents will be generated dynamically -->
+            </div>
+            
+            <div class="add-store-form">
+                <h3>Add New Store</h3>
+                <div style="display: flex; gap: 10px;">
+                    <select id="new-store-preset">
+                        <option value="">Select a store</option>
+                        <option value="aldi">Aldi</option>
+                        <option value="lidl">Lidl</option>
+                        <option value="albert-heijn">Albert Heijn</option>
+                        <option value="carrefour">Carrefour</option>
+                        <option value="delhaize">Delhaize</option>
+                        <option value="custom">Custom Store</option>
+                    </select>
+                    <input type="text" id="new-store-custom" placeholder="Store name" style="display: none;">
+                </div>
+                <button id="add-store-btn">Add Store</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="dark-mode-toggle" id="dark-mode-toggle">🌓</button>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGZmriijO808i6a22LWK0JqOZY-uZZApY",
+            authDomain: "shoppinglistjayathasoft.firebaseapp.com",
+            databaseURL: "https://shoppinglistjayathasoft-default-rtdb.firebaseio.com",
+            projectId: "shoppinglistjayathasoft",
+            storageBucket: "shoppinglistjayathasoft.appspot.com",
+            messagingSenderId: "761832919447",
+            appId: "1:761832919447:web:d33314dbe933e74d33f4d2",
+            measurementId: "G-22KR4RMS8B"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM elements
+        const authContainer = document.getElementById('auth-container');
+        const listContainer = document.getElementById('list-container');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const signinBtn = document.getElementById('signin-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const signoutBtn = document.getElementById('signout-btn');
+        const authMessage = document.getElementById('auth-message');
+        const storeTabsContainer = document.getElementById('store-tabs');
+        const storeContentsContainer = document.getElementById('store-contents');
+        const newStorePreset = document.getElementById('new-store-preset');
+        const newStoreCustom = document.getElementById('new-store-custom');
+        const addStoreBtn = document.getElementById('add-store-btn');
+        const viewAllToggle = document.getElementById('view-all');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+        // Store data with embedded logos (Base64 encoded)
+        const stores = {
+            'aldi': { 
+                name: 'Aldi', 
+                logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgODAiPjxwYXRoIGZpbGw9IiMwMDYxOTkiIGQ9Ik0xMjAgMjBDNTMuNyAyMCAwIDMzLjMgMCA1MHM1My43IDMwIDEyMCAzMCAxMjAtMTMuMyAxMjAtMzAtNTMuNy0zMC0xMjAtMzB6Ii8+PHRleHQgeD0iNTAlIiB5PSI1NSUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QUxESSZuYnNwOzwvdGV4dD48L3N2Zz4=' 
+            },
+            'lidl': { 
+                name: 'Lidl', 
+                logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI0UxMUIxQiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjZmZmIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPkxJREw8L3RleHQ+PC9zdmc+' 
+            },
+            'albert-heijn': { 
+                name: 'Albert Heijn', 
+                logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48cGF0aCBmaWxsPSIjMDA4MUNDIiBkPSJNMzAwIDBIMHYxMDBoMzAweiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjZmZmIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPkFsYmVydCBIZWlqbjwvdGV4dD48L3N2Zz4=' 
+            },
+            'carrefour': { 
+                name: 'Carrefour', 
+                logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48cGF0aCBmaWxsPSIjRjYyRTE3IiBkPSJNMzAwIDBIMHYxMDBoMzAweiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjZmZmIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPkNhcnJlZm91cjwvdGV4dD48L3N2Zz4=' 
+            },
+            'delhaize': { 
+                name: 'Delhaize', 
+                logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMTAwIj48cGF0aCBmaWxsPSIjRjYyRTE3IiBkPSJNMzAwIDBIMHYxMDBoMzAweiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmaWxsPSIjZmZmIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPkRlbGhhaXplPC90ZXh0Pjwvc3ZnPg==' 
+            }
+        };
+
+        // Current view mode (all items or by store)
+        let viewAllMode = false;
+        let currentUser = null;
+
+        // Dark mode preference
+        function checkDarkModePreference() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedMode = localStorage.getItem('darkMode');
+            
+            if (savedMode !== null) {
+                return savedMode === 'true';
+            }
+            return prefersDark;
+        }
+
+        function applyDarkMode(isDark) {
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.textContent = '🌞';
+            } else {
+                document.body.classList.remove('dark-mode');
+                darkModeToggle.textContent = '🌓';
+            }
+            localStorage.setItem('darkMode', isDark.toString());
+        }
+
+        // Initialize dark mode
+        applyDarkMode(checkDarkModePreference());
+
+        // Toggle dark mode
+        darkModeToggle.addEventListener('click', () => {
+            const isDark = !document.body.classList.contains('dark-mode');
+            applyDarkMode(isDark);
+        });
+
+        // Auth state listener
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if (user) {
+                // User is signed in
+                authContainer.style.display = 'none';
+                listContainer.style.display = 'block';
+                loadUserStores(user.uid);
+            } else {
+                // No user signed in
+                authContainer.style.display = 'block';
+                listContainer.style.display = 'none';
+            }
+        });
+
+        // View all toggle handler
+        viewAllToggle.addEventListener('change', () => {
+            viewAllMode = viewAllToggle.checked;
+            if (currentUser) {
+                if (viewAllMode) {
+                    loadAllItems(currentUser.uid);
+                } else {
+                    loadUserStores(currentUser.uid);
+                }
+            }
+        });
+
+        // Auth functions
+        signinBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                authMessage.textContent = "Please enter both email and password";
+                return;
+            }
+            
+            authMessage.textContent = "Signing in...";
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    authMessage.textContent = error.message;
+                });
+        });
+
+        signupBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                authMessage.textContent = "Please enter both email and password";
+                return;
+            }
+            
+            if (password.length < 6) {
+                authMessage.textContent = "Password should be at least 6 characters";
+                return;
+            }
+            
+            authMessage.textContent = "Creating account...";
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .catch(error => {
+                    authMessage.textContent = error.message;
+                });
+        });
+
+        signoutBtn.addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // Store selection handler
+        newStorePreset.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                newStoreCustom.style.display = 'block';
+                newStoreCustom.focus();
+            } else {
+                newStoreCustom.style.display = 'none';
+            }
+        });
+
+        // Add new store
+        addStoreBtn.addEventListener('click', () => {
+            const userId = auth.currentUser?.uid;
+            if (!userId) return;
+            
+            const presetValue = newStorePreset.value;
+            let storeId, storeName, storeLogo;
+            
+            if (presetValue === 'custom') {
+                storeName = newStoreCustom.value.trim();
+                if (!storeName) {
+                    alert("Please enter a store name");
+                    return;
+                }
+                storeId = storeName.toLowerCase().replace(/\s+/g, '-');
+                storeLogo = '';
+            } else if (presetValue && stores[presetValue]) {
+                storeId = presetValue;
+                storeName = stores[presetValue].name;
+                storeLogo = stores[presetValue].logo;
+            } else {
+                alert("Please select a store");
+                return;
+            }
+            
+            // Check if store already exists
+            database.ref('users/' + userId + '/stores/' + storeId).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        alert("This store already exists in your list");
+                        return;
+                    }
+                    
+                    // Add new store
+                    database.ref('users/' + userId + '/stores/' + storeId).set({
+                        name: storeName,
+                        logo: storeLogo,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    }).then(() => {
+                        newStorePreset.value = '';
+                        newStoreCustom.value = '';
+                        newStoreCustom.style.display = 'none';
+                    }).catch(error => {
+                        alert("Error adding store: " + error.message);
+                    });
+                });
+        });
+
+        // Delete store
+        function deleteStore(storeId, storeName) {
+            if (!confirm(`Delete store "${storeName}" and all its items?`)) {
+                return;
+            }
+            
+            const userId = auth.currentUser?.uid;
+            if (!userId) return;
+            
+            // First delete all items in the store
+            database.ref('users/' + userId + '/items/' + storeId).remove()
+                .then(() => {
+                    // Then delete the store itself
+                    return database.ref('users/' + userId + '/stores/' + storeId).remove();
+                })
+                .then(() => {
+                    // Refresh the view
+                    if (viewAllMode) {
+                        loadAllItems(userId);
+                    } else {
+                        loadUserStores(userId);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error deleting store:", error);
+                    alert("Error deleting store: " + error.message);
+                });
+        }
+
+        // Load user's stores
+        function loadUserStores(userId) {
+            storeTabsContainer.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Loading stores...</div>';
+            storeContentsContainer.innerHTML = '';
+            
+            database.ref('users/' + userId + '/stores').on('value', snapshot => {
+                storeTabsContainer.innerHTML = '';
+                storeContentsContainer.innerHTML = '';
+                
+                const userStores = snapshot.val() || {};
+                
+                if (Object.keys(userStores).length === 0) {
+                    storeTabsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No stores">
+                            <p>No stores found. Add your first store!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let firstStore = true;
+                
+                Object.keys(userStores).forEach(storeId => {
+                    const store = userStores[storeId];
+                    
+                    // Create store tab
+                    const tab = document.createElement('div');
+                    tab.className = 'store-tab' + (firstStore ? ' active' : '');
+                    tab.dataset.storeId = storeId;
+                    
+                    if (store.logo) {
+                        const logo = document.createElement('img');
+                        logo.src = store.logo;
+                        logo.alt = store.name + ' logo';
+                        tab.appendChild(logo);
+                    }
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = store.name;
+                    tab.appendChild(nameSpan);
+
+                    // Add delete button to store tab
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-store-btn';
+                    deleteBtn.innerHTML = '×';
+                    deleteBtn.title = 'Delete Store';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent tab switching
+                        deleteStore(storeId, store.name);
+                    });
+                    tab.appendChild(deleteBtn);
+                    
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.store-content').forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById('store-' + storeId).classList.add('active');
+                    });
+                    
+                    storeTabsContainer.appendChild(tab);
+                    
+                    // Create store content
+                    const content = document.createElement('div');
+                    content.className = 'store-content' + (firstStore ? ' active' : '');
+                    content.id = 'store-' + storeId;
+                    
+                    // List header with title and count
+                    const listHeader = document.createElement('div');
+                    listHeader.className = 'list-header';
+                    
+                    const listTitle = document.createElement('h3');
+                    listTitle.className = 'list-title';
+                    listTitle.textContent = store.name;
+                    
+                    const itemCount = document.createElement('div');
+                    itemCount.className = 'item-count';
+                    itemCount.textContent = '0 items';
+                    itemCount.id = 'count-' + storeId;
+                    
+                    listHeader.appendChild(listTitle);
+                    listHeader.appendChild(itemCount);
+                    content.appendChild(listHeader);
+                    
+                    // Item list container
+                    const itemList = document.createElement('div');
+                    itemList.className = 'item-list';
+                    
+                    const list = document.createElement('ul');
+                    list.className = 'shopping-items';
+                    list.id = 'list-' + storeId;
+                    list.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Loading items...</div>';
+                    
+                    itemList.appendChild(list);
+                    content.appendChild(itemList);
+                    
+                    // Add item form
+                    const addForm = document.createElement('div');
+                    addForm.className = 'add-item-form';
+                    
+                    const itemInput = document.createElement('input');
+                    itemInput.type = 'text';
+                    itemInput.placeholder = 'Item name';
+                    itemInput.dataset.storeId = storeId;
+                    
+                    const quantityInput = document.createElement('input');
+                    quantityInput.type = 'number';
+                    quantityInput.placeholder = 'Qty';
+                    quantityInput.min = '1';
+                    quantityInput.value = '1';
+                    quantityInput.dataset.storeId = storeId;
+                    
+                    const remarksInput = document.createElement('input');
+                    remarksInput.type = 'text';
+                    remarksInput.placeholder = 'Remarks';
+                    remarksInput.dataset.storeId = storeId;
+                    
+                    const addBtn = document.createElement('button');
+                    addBtn.textContent = 'Add';
+                    addBtn.dataset.storeId = storeId;
+                    
+                    addForm.appendChild(itemInput);
+                    addForm.appendChild(quantityInput);
+                    addForm.appendChild(remarksInput);
+                    addForm.appendChild(addBtn);
+                    content.appendChild(addForm);
+                    
+                    // Clear all button
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = 'clear-all-btn';
+                    clearBtn.textContent = 'Clear All Items';
+                    clearBtn.dataset.storeId = storeId;
+                    content.appendChild(clearBtn);
+                    
+                    storeContentsContainer.appendChild(content);
+                    
+                    // Load items for this store
+                    loadStoreItems(userId, storeId);
+                    
+                    // Event listeners for this store
+                    addBtn.addEventListener('click', () => addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput));
+                    itemInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput);
+                        }
+                    });
+                    clearBtn.addEventListener('click', () => {
+                        if (confirm(`Clear all items from ${store.name}?`)) {
+                            clearAllItems(userId, storeId);
+                        }
+                    });
+                    
+                    firstStore = false;
+                });
+            });
+        }
+
+        // Load all items across all stores
+        function loadAllItems(userId) {
+            storeTabsContainer.innerHTML = '<div class="store-tab active">All Items</div>';
+            storeContentsContainer.innerHTML = '';
+            
+            const content = document.createElement('div');
+            content.className = 'store-content active';
+            content.id = 'store-all';
+            
+            // List header
+            const listHeader = document.createElement('div');
+            listHeader.className = 'list-header';
+            
+            const listTitle = document.createElement('h3');
+            listTitle.className = 'list-title';
+            listTitle.textContent = 'All Items';
+            
+            const itemCount = document.createElement('div');
+            itemCount.className = 'item-count';
+            itemCount.textContent = '0 items';
+            itemCount.id = 'count-all';
+            
+            listHeader.appendChild(listTitle);
+            listHeader.appendChild(itemCount);
+            content.appendChild(listHeader);
+            
+            // Item list container
+            const itemList = document.createElement('div');
+            itemList.className = 'item-list';
+            
+            const list = document.createElement('ul');
+            list.className = 'shopping-items';
+            list.id = 'list-all';
+            list.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Loading all items...</div>';
+            
+            itemList.appendChild(list);
+            content.appendChild(itemList);
+            
+            storeContentsContainer.appendChild(content);
+            
+            // Load all items
+            database.ref('users/' + userId + '/items').once('value')
+                .then(snapshot => {
+                    const itemsByStore = snapshot.val() || {};
+                    const allItems = [];
+                    
+                    Object.keys(itemsByStore).forEach(storeId => {
+                        const storeItems = itemsByStore[storeId];
+                        Object.keys(storeItems).forEach(itemId => {
+                            allItems.push({
+                                ...storeItems[itemId],
+                                id: itemId,
+                                storeId: storeId
+                            });
+                        });
+                    });
+                    
+                    // Update item count
+                    const countElement = document.getElementById('count-all');
+                    countElement.textContent = `${allItems.length} ${allItems.length === 1 ? 'item' : 'items'}`;
+                    
+                    // Display items
+                    const listElement = document.getElementById('list-all');
+                    listElement.innerHTML = '';
+                    
+                    if (allItems.length === 0) {
+                        listElement.innerHTML = `
+                            <div class="empty-state">
+                                <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No items">
+                                <p>No items found across all stores</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Sort items by store and then by timestamp
+                    allItems.sort((a, b) => {
+                        if (a.storeId !== b.storeId) return a.storeId.localeCompare(b.storeId);
+                        return (b.createdAt || 0) - (a.createdAt || 0);
+                    });
+                    
+                    allItems.forEach(item => {
+                        addItemToDOM(item.storeId, item.id, item, true);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error loading all items:", error);
+                    document.getElementById('list-all').innerHTML = `
+                        <div class="empty-state">
+                            <p>Error loading items. Please try again.</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Load items for a specific store
+        function loadStoreItems(userId, storeId) {
+            const listElement = document.getElementById('list-' + storeId);
+            const countElement = document.getElementById('count-' + storeId);
+            listElement.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Loading items...</div>';
+            
+            database.ref('users/' + userId + '/items/' + storeId).on('value', snapshot => {
+                listElement.innerHTML = '';
+                
+                const items = snapshot.val() || {};
+                
+                // Update item count
+                const itemCount = Object.keys(items).length;
+                countElement.textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
+                
+                if (itemCount === 0) {
+                    listElement.innerHTML = `
+                        <div class="empty-state">
+                            <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No items">
+                            <p>No items yet. Add your first item!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Convert to array and sort by checked status (unchecked first) then by timestamp (newest first)
+                const itemsArray = Object.entries(items).map(([id, item]) => ({ id, ...item }));
+                itemsArray.sort((a, b) => {
+                    if (a.checked !== b.checked) return a.checked ? 1 : -1;
+                    return (b.createdAt || 0) - (a.createdAt || 0);
+                });
+                
+                itemsArray.forEach(item => {
+                    addItemToDOM(storeId, item.id, item);
+                });
+            });
+        }
+
+        // Add item to DOM
+        function addItemToDOM(storeId, itemId, item, showStore = false) {
+            const listElement = document.getElementById(viewAllMode ? 'list-all' : 'list-' + storeId);
+            
+            const li = document.createElement('li');
+            li.className = 'item' + (item.checked ? ' checked' : '');
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'item-checkbox';
+            checkbox.checked = item.checked || false;
+            checkbox.addEventListener('change', () => {
+                li.classList.toggle('checked', checkbox.checked);
+                updateItem(storeId, itemId, { checked: checkbox.checked });
+            });
+            
+            const details = document.createElement('div');
+            details.className = 'item-details';
+            
+            const text = document.createElement('div');
+            text.className = 'item-text';
+            text.textContent = item.text;
+            
+            const meta = document.createElement('div');
+            meta.className = 'item-meta';
+            
+            const quantity = document.createElement('div');
+            quantity.className = 'item-quantity';
+            quantity.innerHTML = `<span>Qty:</span>
+                                <input type="number" min="1" value="${item.quantity || 1}" 
+                                data-store-id="${storeId}" data-item-id="${itemId}">`;
+            
+            quantity.querySelector('input').addEventListener('change', (e) => {
+                updateItem(storeId, itemId, { quantity: parseInt(e.target.value) || 1 });
+            });
+            
+            if (showStore) {
+                const storeName = document.createElement('div');
+                storeName.textContent = `Store: ${stores[storeId]?.name || storeId}`;
+                meta.appendChild(storeName);
+            }
+            
+            meta.appendChild(quantity);
+            
+            if (item.remarks) {
+                const remarks = document.createElement('div');
+                remarks.className = 'item-remarks';
+                remarks.textContent = item.remarks;
+                details.appendChild(remarks);
+            }
+            
+            details.appendChild(text);
+            details.appendChild(meta);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Delete';
+            deleteBtn.addEventListener('click', () => {
+                if (confirm(`Delete "${item.text}"?`)) {
+                    deleteItem(storeId, itemId);
+                }
+            });
+            
+            li.appendChild(checkbox);
+            li.appendChild(details);
+            li.appendChild(deleteBtn);
+            
+            listElement.appendChild(li);
+        }
+
+        // Add item to store
+        function addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput) {
+            const text = itemInput.value.trim();
+            const quantity = parseInt(quantityInput.value) || 1;
+            const remarks = remarksInput.value.trim();
+            
+            if (!text) {
+                alert("Please enter an item name");
+                return;
+            }
+            
+            if (text.length > 100) {
+                alert("Item name is too long (max 100 characters)");
+                return;
+            }
+            
+            if (remarks.length > 200) {
+                alert("Remarks are too long (max 200 characters)");
+                return;
+            }
+            
+            const newItem = {
+                text: text,
+                quantity: quantity,
+                checked: false,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            if (remarks) {
+                newItem.remarks = remarks;
+            }
+            
+            const newItemRef = database.ref('users/' + userId + '/items/' + storeId).push();
+            newItemRef.set(newItem)
+                .then(() => {
+                    itemInput.value = '';
+                    quantityInput.value = '1';
+                    remarksInput.value = '';
+                    itemInput.focus();
+                })
+                .catch(error => {
+                    alert("Error adding item: " + error.message);
+                });
+        }
+
+        // Update item
+        function updateItem(storeId, itemId, updates) {
+            const userId = auth.currentUser.uid;
+            database.ref('users/' + userId + '/items/' + storeId + '/' + itemId).update(updates)
+                .catch(error => {
+                    console.error("Error updating item:", error);
+                    alert("Failed to update item. Please try again.");
+                });
+        }
+
+        // Delete item
+        function deleteItem(storeId, itemId) {
+            const userId = auth.currentUser.uid;
+            database.ref('users/' + userId + '/items/' + storeId + '/' + itemId).remove()
+                .catch(error => {
+                    console.error("Error deleting item:", error);
+                    alert("Failed to delete item. Please try again.");
+                });
+        }
+
+        // Clear all items in a store
+        function clearAllItems(userId, storeId) {
+            database.ref('users/' + userId + '/items/' + storeId).remove()
+                .then(() => {
+                    // Refresh the view
+                    if (viewAllMode) {
+                        loadAllItems(userId);
+                    } else {
+                        loadStoreItems(userId, storeId);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error clearing items:", error);
+                    alert("Error clearing items: " + error.message);
+                });
+        }
+    </script>
+</body>
+</html>
