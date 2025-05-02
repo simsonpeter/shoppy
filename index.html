@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jayatha'sShoppy Appy</title>
+    <title>Advanced Shopping List</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #3498db;
@@ -51,6 +52,7 @@
             color: var(--text-color);
             line-height: 1.6;
             transition: background-color 0.3s, color 0.3s;
+            padding-top: 70px; /* Space for sticky header */
         }
         
         #app {
@@ -64,10 +66,18 @@
         }
         
         h1 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             text-align: center;
             color: var(--text-color);
-            margin-bottom: 20px;
+            padding: 15px 0;
             font-size: 1.8rem;
+            background-color: var(--container-bg);
+            box-shadow: var(--shadow);
+            z-index: 100;
+            margin-bottom: 20px;
         }
         
         .container {
@@ -77,6 +87,7 @@
             box-shadow: var(--shadow);
             margin-bottom: 20px;
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
         
         #auth-container, #list-container {
@@ -507,39 +518,68 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Dark mode toggle */
-        .dark-mode-toggle {
+        /* Floating action buttons */
+        .fab-container {
             position: fixed;
             bottom: 20px;
             right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
             z-index: 100;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
+        }
+        
+        .fab {
             width: 50px;
             height: 50px;
-            font-size: 1.5rem;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .fab:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-3px);
+        }
+        
+        .fab:active {
+            transform: translateY(0);
+        }
+        
+        .fab-dark-mode {
+            background-color: var(--gray-color);
+        }
+        
+        .fab-dark-mode:hover {
+            background-color: var(--dark-gray);
         }
         
         /* Mobile optimizations */
         @media (max-width: 480px) {
+            body {
+                padding-top: 60px;
+            }
+            
+            h1 {
+                padding: 10px 0;
+                font-size: 1.5rem;
+            }
+            
             #app {
                 padding: 10px;
             }
             
             .container {
                 padding: 15px;
-            }
-            
-            h1 {
-                font-size: 1.5rem;
-                margin-bottom: 15px;
+                margin-top: 5px;
             }
             
             input, button, select, textarea {
@@ -559,20 +599,23 @@
                 padding: 10px 15px;
             }
             
-            .dark-mode-toggle {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2rem;
+            .fab-container {
                 bottom: 15px;
                 right: 15px;
+            }
+            
+            .fab {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
             }
         }
     </style>
 </head>
 <body>
+    <h1>Advanced Shopping List</h1>
+    
     <div id="app">
-        <h1>Jayatha's  Shoppy Appy</h1>
-        
         <div id="auth-container" class="container">
             <h2>Sign In</h2>
             <input type="email" id="email" placeholder="Email" autocomplete="username">
@@ -601,27 +644,17 @@
             <div id="store-contents">
                 <!-- Store contents will be generated dynamically -->
             </div>
-            
-            <div class="add-store-form">
-                <h3>Add New Store</h3>
-                <div style="display: flex; gap: 10px;">
-                    <select id="new-store-preset">
-                        <option value="">Select a store</option>
-                        <option value="aldi">Aldi</option>
-                        <option value="lidl">Lidl</option>
-                        <option value="albert-heijn">Albert Heijn</option>
-                        <option value="carrefour">Carrefour</option>
-                        <option value="delhaize">Delhaize</option>
-                        <option value="custom">Custom Store</option>
-                    </select>
-                    <input type="text" id="new-store-custom" placeholder="Store name" style="display: none;">
-                </div>
-                <button id="add-store-btn">Add Store</button>
-            </div>
         </div>
     </div>
 
-    <button class="dark-mode-toggle" id="dark-mode-toggle">🌓</button>
+    <div class="fab-container">
+        <button class="fab" id="add-store-fab" title="Add Store">
+            <i class="fas fa-store"></i>
+        </button>
+        <button class="fab fab-dark-mode" id="dark-mode-toggle" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -657,11 +690,9 @@
         const authMessage = document.getElementById('auth-message');
         const storeTabsContainer = document.getElementById('store-tabs');
         const storeContentsContainer = document.getElementById('store-contents');
-        const newStorePreset = document.getElementById('new-store-preset');
-        const newStoreCustom = document.getElementById('new-store-custom');
-        const addStoreBtn = document.getElementById('add-store-btn');
         const viewAllToggle = document.getElementById('view-all');
         const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const addStoreFab = document.getElementById('add-store-fab');
 
         // Store data with embedded logos (Base64 encoded)
         const stores = {
@@ -705,10 +736,12 @@
         function applyDarkMode(isDark) {
             if (isDark) {
                 document.body.classList.add('dark-mode');
-                darkModeToggle.textContent = '🌞';
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                darkModeToggle.title = "Switch to Light Mode";
             } else {
                 document.body.classList.remove('dark-mode');
-                darkModeToggle.textContent = '🌓';
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                darkModeToggle.title = "Switch to Dark Mode";
             }
             localStorage.setItem('darkMode', isDark.toString());
         }
@@ -721,6 +754,163 @@
             const isDark = !document.body.classList.contains('dark-mode');
             applyDarkMode(isDark);
         });
+
+        // Show add store modal
+        function showAddStoreModal() {
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.right = '0';
+            modal.style.bottom = '0';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.zIndex = '1000';
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.backgroundColor = 'var(--container-bg)';
+            modalContent.style.padding = '20px';
+            modalContent.style.borderRadius = '12px';
+            modalContent.style.width = '90%';
+            modalContent.style.maxWidth = '400px';
+            modalContent.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+            
+            const title = document.createElement('h3');
+            title.textContent = 'Add New Store';
+            title.style.marginTop = '0';
+            modalContent.appendChild(title);
+            
+            const formGroup = document.createElement('div');
+            formGroup.style.display = 'flex';
+            formGroup.style.gap = '10px';
+            
+            const storeSelect = document.createElement('select');
+            storeSelect.id = 'modal-store-preset';
+            storeSelect.style.flex = '1';
+            
+            const optionDefault = document.createElement('option');
+            optionDefault.value = '';
+            optionDefault.textContent = 'Select a store';
+            storeSelect.appendChild(optionDefault);
+            
+            for (const [id, store] of Object.entries(stores)) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = store.name;
+                storeSelect.appendChild(option);
+            }
+            
+            const optionCustom = document.createElement('option');
+            optionCustom.value = 'custom';
+            optionCustom.textContent = 'Custom Store';
+            storeSelect.appendChild(optionCustom);
+            
+            formGroup.appendChild(storeSelect);
+            
+            const customInput = document.createElement('input');
+            customInput.type = 'text';
+            customInput.id = 'modal-store-custom';
+            customInput.placeholder = 'Store name';
+            customInput.style.display = 'none';
+            customInput.style.flex = '1';
+            formGroup.appendChild(customInput);
+            
+            modalContent.appendChild(formGroup);
+            
+            const buttonGroup = document.createElement('div');
+            buttonGroup.style.display = 'flex';
+            buttonGroup.style.gap = '10px';
+            buttonGroup.style.marginTop = '20px';
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.flex = '1';
+            cancelBtn.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            buttonGroup.appendChild(cancelBtn);
+            
+            const addBtn = document.createElement('button');
+            addBtn.textContent = 'Add';
+            addBtn.style.flex = '1';
+            addBtn.addEventListener('click', () => {
+                addStoreFromModal();
+                document.body.removeChild(modal);
+            });
+            buttonGroup.appendChild(addBtn);
+            
+            modalContent.appendChild(buttonGroup);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Store selection handler
+            storeSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    customInput.style.display = 'block';
+                    customInput.focus();
+                } else {
+                    customInput.style.display = 'none';
+                }
+            });
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+        }
+
+        // Add store from modal
+        function addStoreFromModal() {
+            const userId = auth.currentUser?.uid;
+            if (!userId) return;
+            
+            const presetValue = document.getElementById('modal-store-preset').value;
+            const customValue = document.getElementById('modal-store-custom').value.trim();
+            
+            let storeId, storeName, storeLogo;
+            
+            if (presetValue === 'custom') {
+                storeName = customValue;
+                if (!storeName) {
+                    alert("Please enter a store name");
+                    return;
+                }
+                storeId = storeName.toLowerCase().replace(/\s+/g, '-');
+                storeLogo = '';
+            } else if (presetValue && stores[presetValue]) {
+                storeId = presetValue;
+                storeName = stores[presetValue].name;
+                storeLogo = stores[presetValue].logo;
+            } else {
+                alert("Please select a store");
+                return;
+            }
+            
+            // Check if store already exists
+            database.ref('users/' + userId + '/stores/' + storeId).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        alert("This store already exists in your list");
+                        return;
+                    }
+                    
+                    // Add new store
+                    database.ref('users/' + userId + '/stores/' + storeId).set({
+                        name: storeName,
+                        logo: storeLogo,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    }).catch(error => {
+                        alert("Error adding store: " + error.message);
+                    });
+                });
+        }
+
+        // Add store FAB click handler
+        addStoreFab.addEventListener('click', showAddStoreModal);
 
         // Auth state listener
         auth.onAuthStateChanged(user => {
@@ -791,64 +981,6 @@
 
         signoutBtn.addEventListener('click', () => {
             auth.signOut();
-        });
-
-        // Store selection handler
-        newStorePreset.addEventListener('change', (e) => {
-            if (e.target.value === 'custom') {
-                newStoreCustom.style.display = 'block';
-                newStoreCustom.focus();
-            } else {
-                newStoreCustom.style.display = 'none';
-            }
-        });
-
-        // Add new store
-        addStoreBtn.addEventListener('click', () => {
-            const userId = auth.currentUser?.uid;
-            if (!userId) return;
-            
-            const presetValue = newStorePreset.value;
-            let storeId, storeName, storeLogo;
-            
-            if (presetValue === 'custom') {
-                storeName = newStoreCustom.value.trim();
-                if (!storeName) {
-                    alert("Please enter a store name");
-                    return;
-                }
-                storeId = storeName.toLowerCase().replace(/\s+/g, '-');
-                storeLogo = '';
-            } else if (presetValue && stores[presetValue]) {
-                storeId = presetValue;
-                storeName = stores[presetValue].name;
-                storeLogo = stores[presetValue].logo;
-            } else {
-                alert("Please select a store");
-                return;
-            }
-            
-            // Check if store already exists
-            database.ref('users/' + userId + '/stores/' + storeId).once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        alert("This store already exists in your list");
-                        return;
-                    }
-                    
-                    // Add new store
-                    database.ref('users/' + userId + '/stores/' + storeId).set({
-                        name: storeName,
-                        logo: storeLogo,
-                        createdAt: firebase.database.ServerValue.TIMESTAMP
-                    }).then(() => {
-                        newStorePreset.value = '';
-                        newStoreCustom.value = '';
-                        newStoreCustom.style.display = 'none';
-                    }).catch(error => {
-                        alert("Error adding store: " + error.message);
-                    });
-                });
         });
 
         // Delete store
