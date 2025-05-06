@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jayatah's Shoppy App</title>
+    <title>Jayatha's Shoppy App</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -12,6 +12,7 @@
             --danger-color: #e74c3c;
             --danger-hover: #c0392b;
             --success-color: #2ecc71;
+            --warning-color: #f39c12;
             --gray-color: #95a5a6;
             --light-gray: #ecf0f1;
             --dark-gray: #7f8c8d;
@@ -27,6 +28,7 @@
             --item-bg: #ffffff;
             --border-color: #eee;
             --input-bg: #ffffff;
+            --modal-overlay: rgba(0,0,0,0.5);
         }
 
         .dark-mode {
@@ -38,10 +40,13 @@
             --input-bg: #3d3d3d;
             --white: #2d2d2d;
             --light-gray: #444;
+            --modal-overlay: rgba(0,0,0,0.7);
         }
         
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         
         body {
@@ -52,7 +57,7 @@
             color: var(--text-color);
             line-height: 1.6;
             transition: background-color 0.3s, color 0.3s;
-            padding-top: 70px; /* Space for sticky header */
+            padding-top: 70px;
         }
         
         #app {
@@ -63,6 +68,7 @@
         
         h1, h2, h3 {
             margin-top: 0;
+            color: var(--text-color);
         }
         
         h1 {
@@ -90,7 +96,7 @@
             margin-top: 10px;
         }
         
-        #auth-container, #list-container {
+        #auth-container, #list-container, #chat-container {
             display: none;
         }
         
@@ -410,6 +416,19 @@
             margin: 0;
         }
         
+        .item-price {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .item-price input {
+            width: 80px;
+            padding: 4px;
+            text-align: right;
+            margin: 0;
+        }
+        
         .item-remarks {
             font-style: italic;
             color: var(--gray-color);
@@ -562,6 +581,157 @@
             background-color: var(--dark-gray);
         }
         
+        /* Chat Container */
+        #chat-container {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 300px;
+            background: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            z-index: 99;
+            display: none;
+            flex-direction: column;
+            max-height: 400px;
+        }
+        
+        .chat-header {
+            padding: 12px 15px;
+            background: var(--primary-color);
+            color: white;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            min-height: 200px;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--light-gray);
+            word-break: break-word;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .chat-input input {
+            flex: 1;
+            margin-right: 8px;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            display: none;
+        }
+        
+        /* Share Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--modal-overlay);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-color);
+            padding: 5px;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
         /* Mobile optimizations */
         @media (max-width: 480px) {
             body {
@@ -609,6 +779,13 @@
                 height: 45px;
                 font-size: 1.1rem;
             }
+            
+            #chat-container {
+                width: calc(100% - 40px);
+                bottom: 70px;
+                right: 10px;
+                left: 10px;
+            }
         }
     </style>
 </head>
@@ -627,6 +804,7 @@
         
         <div id="list-container" class="container">
             <button id="signout-btn">Sign Out</button>
+            <button id="chat-toggle-btn" style="margin-right: 10px;">Chat</button>
             <h2>My Shopping Lists</h2>
             
             <div class="view-all-toggle">
@@ -647,13 +825,58 @@
         </div>
     </div>
 
+    <div id="chat-container">
+        <div class="chat-header">
+            <span>Chat</span>
+            <button class="chat-close">&times;</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Type a message...">
+            <button id="chat-send-btn">Send</button>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        New message received!
+    </div>
+
     <div class="fab-container">
         <button class="fab" id="add-store-fab" title="Add Store">
             <i class="fas fa-store"></i>
         </button>
+        <button class="fab" id="share-list-fab" title="Share List">
+            <i class="fas fa-share"></i>
+        </button>
         <button class="fab fab-dark-mode" id="dark-mode-toggle" title="Toggle Dark Mode">
             <i class="fas fa-moon"></i>
         </button>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal" id="share-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Share Shopping List</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="share-email">Email Address</label>
+                    <input type="email" id="share-email" placeholder="Enter recipient's email">
+                </div>
+                <div class="form-group">
+                    <label for="share-message">Message (optional)</label>
+                    <textarea id="share-message" placeholder="Add a message"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-share-btn">Cancel</button>
+                <button id="send-share-btn">Share</button>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
@@ -682,17 +905,30 @@
         // DOM elements
         const authContainer = document.getElementById('auth-container');
         const listContainer = document.getElementById('list-container');
+        const chatContainer = document.getElementById('chat-container');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const signinBtn = document.getElementById('signin-btn');
         const signupBtn = document.getElementById('signup-btn');
         const signoutBtn = document.getElementById('signout-btn');
+        const chatToggleBtn = document.getElementById('chat-toggle-btn');
+        const chatCloseBtn = document.querySelector('.chat-close');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
         const authMessage = document.getElementById('auth-message');
         const storeTabsContainer = document.getElementById('store-tabs');
         const storeContentsContainer = document.getElementById('store-contents');
         const viewAllToggle = document.getElementById('view-all');
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const addStoreFab = document.getElementById('add-store-fab');
+        const shareListFab = document.getElementById('share-list-fab');
+        const notification = document.getElementById('notification');
+        const shareModal = document.getElementById('share-modal');
+        const shareEmail = document.getElementById('share-email');
+        const shareMessage = document.getElementById('share-message');
+        const cancelShareBtn = document.getElementById('cancel-share-btn');
+        const sendShareBtn = document.getElementById('send-share-btn');
 
         // Store data with embedded logos (Base64 encoded)
         const stores = {
@@ -721,6 +957,8 @@
         // Current view mode (all items or by store)
         let viewAllMode = false;
         let currentUser = null;
+        let currentStoreId = null;
+        let chatListener = null;
 
         // Dark mode preference
         function checkDarkModePreference() {
@@ -755,162 +993,160 @@
             applyDarkMode(isDark);
         });
 
-        // Show add store modal
-        function showAddStoreModal() {
-            const modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.right = '0';
-            modal.style.bottom = '0';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-            modal.style.display = 'flex';
-            modal.style.justifyContent = 'center';
-            modal.style.alignItems = 'center';
-            modal.style.zIndex = '1000';
+        // Show modal function
+        function showModal(modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Hide modal function
+        function hideModal(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Toggle chat
+        function toggleChat() {
+            chatContainer.style.display = chatContainer.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        // Send chat message
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
             
-            const modalContent = document.createElement('div');
-            modalContent.style.backgroundColor = 'var(--container-bg)';
-            modalContent.style.padding = '20px';
-            modalContent.style.borderRadius = '12px';
-            modalContent.style.width = '90%';
-            modalContent.style.maxWidth = '400px';
-            modalContent.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+            const userId = auth.currentUser?.uid;
+            if (!userId) return;
             
-            const title = document.createElement('h3');
-            title.textContent = 'Add New Store';
-            title.style.marginTop = '0';
-            modalContent.appendChild(title);
+            database.ref('chatMessages').push().set({
+                senderId: userId,
+                senderEmail: auth.currentUser.email,
+                message: message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                chatInput.value = '';
+            }).catch(error => {
+                console.error("Error sending message:", error);
+            });
+        }
+
+        // Load chat messages
+        function loadChatMessages() {
+            chatMessages.innerHTML = '';
             
-            const formGroup = document.createElement('div');
-            formGroup.style.display = 'flex';
-            formGroup.style.gap = '10px';
-            
-            const storeSelect = document.createElement('select');
-            storeSelect.id = 'modal-store-preset';
-            storeSelect.style.flex = '1';
-            
-            const optionDefault = document.createElement('option');
-            optionDefault.value = '';
-            optionDefault.textContent = 'Select a store';
-            storeSelect.appendChild(optionDefault);
-            
-            for (const [id, store] of Object.entries(stores)) {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = store.name;
-                storeSelect.appendChild(option);
+            if (chatListener) {
+                database.ref('chatMessages').off('child_added', chatListener);
             }
             
-            const optionCustom = document.createElement('option');
-            optionCustom.value = 'custom';
-            optionCustom.textContent = 'Custom Store';
-            storeSelect.appendChild(optionCustom);
-            
-            formGroup.appendChild(storeSelect);
-            
-            const customInput = document.createElement('input');
-            customInput.type = 'text';
-            customInput.id = 'modal-store-custom';
-            customInput.placeholder = 'Store name';
-            customInput.style.display = 'none';
-            customInput.style.flex = '1';
-            formGroup.appendChild(customInput);
-            
-            modalContent.appendChild(formGroup);
-            
-            const buttonGroup = document.createElement('div');
-            buttonGroup.style.display = 'flex';
-            buttonGroup.style.gap = '10px';
-            buttonGroup.style.marginTop = '20px';
-            
-            const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = 'Cancel';
-            cancelBtn.style.flex = '1';
-            cancelBtn.addEventListener('click', () => {
-                document.body.removeChild(modal);
-            });
-            buttonGroup.appendChild(cancelBtn);
-            
-            const addBtn = document.createElement('button');
-            addBtn.textContent = 'Add';
-            addBtn.style.flex = '1';
-            addBtn.addEventListener('click', () => {
-                addStoreFromModal();
-                document.body.removeChild(modal);
-            });
-            buttonGroup.appendChild(addBtn);
-            
-            modalContent.appendChild(buttonGroup);
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-            
-            // Store selection handler
-            storeSelect.addEventListener('change', (e) => {
-                if (e.target.value === 'custom') {
-                    customInput.style.display = 'block';
-                    customInput.focus();
-                } else {
-                    customInput.style.display = 'none';
-                }
-            });
-            
-            // Close modal when clicking outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    document.body.removeChild(modal);
+            chatListener = database.ref('chatMessages').orderByChild('timestamp').limitToLast(50).on('child_added', snapshot => {
+                const message = snapshot.val();
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                
+                const senderElement = document.createElement('div');
+                senderElement.className = 'message-sender';
+                senderElement.textContent = message.senderEmail;
+                
+                const textElement = document.createElement('div');
+                textElement.textContent = message.message;
+                
+                messageElement.appendChild(senderElement);
+                messageElement.appendChild(textElement);
+                
+                chatMessages.appendChild(messageElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Show notification if chat is closed and message is from another user
+                if (chatContainer.style.display !== 'flex' && message.senderId !== auth.currentUser?.uid) {
+                    showNotification(`New message from ${message.senderEmail}`);
                 }
             });
         }
 
-        // Add store from modal
-        function addStoreFromModal() {
-            const userId = auth.currentUser?.uid;
-            if (!userId) return;
+        // Share list with another user
+        function shareList() {
+            const email = shareEmail.value.trim();
+            const message = shareMessage.value.trim();
             
-            const presetValue = document.getElementById('modal-store-preset').value;
-            const customValue = document.getElementById('modal-store-custom').value.trim();
-            
-            let storeId, storeName, storeLogo;
-            
-            if (presetValue === 'custom') {
-                storeName = customValue;
-                if (!storeName) {
-                    alert("Please enter a store name");
-                    return;
-                }
-                storeId = storeName.toLowerCase().replace(/\s+/g, '-');
-                storeLogo = '';
-            } else if (presetValue && stores[presetValue]) {
-                storeId = presetValue;
-                storeName = stores[presetValue].name;
-                storeLogo = stores[presetValue].logo;
-            } else {
-                alert("Please select a store");
+            if (!email) {
+                showNotification("Please enter recipient's email");
                 return;
             }
             
-            // Check if store already exists
-            database.ref('users/' + userId + '/stores/' + storeId).once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        alert("This store already exists in your list");
-                        return;
-                    }
-                    
-                    // Add new store
-                    database.ref('users/' + userId + '/stores/' + storeId).set({
-                        name: storeName,
-                        logo: storeLogo,
-                        createdAt: firebase.database.ServerValue.TIMESTAMP
-                    }).catch(error => {
-                        alert("Error adding store: " + error.message);
-                    });
-                });
+            if (!validateEmail(email)) {
+                showNotification("Please enter a valid email address");
+                return;
+            }
+            
+            const userId = auth.currentUser?.uid;
+            if (!userId) return;
+            
+            // In a real implementation, you would:
+            // 1. Verify the recipient exists in your system
+            // 2. Create a shared list reference
+            // 3. Send an email notification
+            
+            // This is just a mock implementation
+            database.ref('sharedLists').push().set({
+                senderId: userId,
+                senderEmail: auth.currentUser.email,
+                recipientEmail: email,
+                message: message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                hideModal(shareModal);
+                showNotification("List shared successfully!");
+            }).catch(error => {
+                console.error("Error sharing list:", error);
+                showNotification("Error sharing list. Please try again.");
+            });
+        }
+
+        // Validate email
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
         }
 
         // Add store FAB click handler
         addStoreFab.addEventListener('click', showAddStoreModal);
+
+        // Share list FAB click handler
+        shareListFab.addEventListener('click', () => showModal(shareModal));
+
+        // Chat toggle button
+        chatToggleBtn.addEventListener('click', toggleChat);
+        chatCloseBtn.addEventListener('click', toggleChat);
+
+        // Chat send button
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+
+        // Share modal buttons
+        cancelShareBtn.addEventListener('click', () => hideModal(shareModal));
+        sendShareBtn.addEventListener('click', shareList);
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal(modal);
+                }
+            });
+        });
 
         // Auth state listener
         auth.onAuthStateChanged(user => {
@@ -920,10 +1156,17 @@
                 authContainer.style.display = 'none';
                 listContainer.style.display = 'block';
                 loadUserStores(user.uid);
+                loadChatMessages();
             } else {
                 // No user signed in
                 authContainer.style.display = 'block';
                 listContainer.style.display = 'none';
+                chatContainer.style.display = 'none';
+                
+                if (chatListener) {
+                    database.ref('chatMessages').off('child_added', chatListener);
+                    chatListener = null;
+                }
             }
         });
 
@@ -1016,6 +1259,7 @@
         function loadUserStores(userId) {
             storeTabsContainer.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Loading stores...</div>';
             storeContentsContainer.innerHTML = '';
+            currentStoreId = null;
             
             database.ref('users/' + userId + '/stores').on('value', snapshot => {
                 storeTabsContainer.innerHTML = '';
@@ -1069,7 +1313,11 @@
                         document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
                         document.querySelectorAll('.store-content').forEach(c => c.classList.remove('active'));
                         tab.classList.add('active');
-                        document.getElementById('store-' + storeId).classList.add('active');
+                        const content = document.getElementById('store-' + storeId);
+                        if (content) {
+                            content.classList.add('active');
+                            currentStoreId = storeId;
+                        }
                     });
                     
                     storeTabsContainer.appendChild(tab);
@@ -1078,6 +1326,10 @@
                     const content = document.createElement('div');
                     content.className = 'store-content' + (firstStore ? ' active' : '');
                     content.id = 'store-' + storeId;
+                    
+                    if (firstStore) {
+                        currentStoreId = storeId;
+                    }
                     
                     // List header with title and count
                     const listHeader = document.createElement('div');
@@ -1112,10 +1364,22 @@
                     const addForm = document.createElement('div');
                     addForm.className = 'add-item-form';
                     
+                    const formRow1 = document.createElement('div');
+                    formRow1.className = 'form-row';
+                    
+                    const itemGroup = document.createElement('div');
+                    itemGroup.className = 'form-group';
+                    
                     const itemInput = document.createElement('input');
                     itemInput.type = 'text';
                     itemInput.placeholder = 'Item name';
                     itemInput.dataset.storeId = storeId;
+                    
+                    itemGroup.appendChild(itemInput);
+                    formRow1.appendChild(itemGroup);
+                    
+                    const quantityGroup = document.createElement('div');
+                    quantityGroup.className = 'form-group';
                     
                     const quantityInput = document.createElement('input');
                     quantityInput.type = 'number';
@@ -1124,19 +1388,41 @@
                     quantityInput.value = '1';
                     quantityInput.dataset.storeId = storeId;
                     
+                    quantityGroup.appendChild(quantityInput);
+                    formRow1.appendChild(quantityGroup);
+                    
+                    addForm.appendChild(formRow1);
+                    
+                    const formRow2 = document.createElement('div');
+                    formRow2.className = 'form-row';
+                    
+                    const remarksGroup = document.createElement('div');
+                    remarksGroup.className = 'form-group';
+                    
                     const remarksInput = document.createElement('input');
                     remarksInput.type = 'text';
                     remarksInput.placeholder = 'Remarks';
                     remarksInput.dataset.storeId = storeId;
                     
+                    remarksGroup.appendChild(remarksInput);
+                    formRow2.appendChild(remarksGroup);
+                    
+                    addForm.appendChild(formRow2);
+                    
+                    const formRow3 = document.createElement('div');
+                    formRow3.className = 'form-row';
+                    
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.className = 'form-group';
+                    
                     const addBtn = document.createElement('button');
                     addBtn.textContent = 'Add';
                     addBtn.dataset.storeId = storeId;
                     
-                    addForm.appendChild(itemInput);
-                    addForm.appendChild(quantityInput);
-                    addForm.appendChild(remarksInput);
-                    addForm.appendChild(addBtn);
+                    buttonGroup.appendChild(addBtn);
+                    formRow3.appendChild(buttonGroup);
+                    
+                    addForm.appendChild(formRow3);
                     content.appendChild(addForm);
                     
                     // Clear all button
@@ -1316,6 +1602,49 @@
             checkbox.addEventListener('change', () => {
                 li.classList.toggle('checked', checkbox.checked);
                 updateItem(storeId, itemId, { checked: checkbox.checked });
+                
+                // Show price input when item is checked
+                if (checkbox.checked) {
+                    const priceInput = document.createElement('input');
+                    priceInput.type = 'number';
+                    priceInput.min = '0';
+                    priceInput.step = '0.01';
+                    priceInput.placeholder = 'Enter price';
+                    priceInput.style.width = '80px';
+                    priceInput.style.marginLeft = '10px';
+                    
+                    // If price already exists, show it
+                    if (item.price) {
+                        priceInput.value = item.price;
+                    }
+                    
+                    // Find the price container or create it
+                    let priceContainer = li.querySelector('.price-container');
+                    if (!priceContainer) {
+                        priceContainer = document.createElement('div');
+                        priceContainer.className = 'price-container';
+                        priceContainer.style.display = 'flex';
+                        priceContainer.style.alignItems = 'center';
+                        priceContainer.style.marginTop = '5px';
+                        li.querySelector('.item-details').appendChild(priceContainer);
+                    }
+                    
+                    // Clear previous price input if any
+                    priceContainer.innerHTML = '';
+                    
+                    const priceLabel = document.createElement('span');
+                    priceLabel.textContent = 'Price: ';
+                    priceLabel.style.marginRight = '5px';
+                    
+                    priceContainer.appendChild(priceLabel);
+                    priceContainer.appendChild(priceInput);
+                    
+                    // Save price when input changes
+                    priceInput.addEventListener('change', () => {
+                        const price = parseFloat(priceInput.value) || 0;
+                        updateItem(storeId, itemId, { price: price });
+                    });
+                }
             });
             
             const details = document.createElement('div');
@@ -1371,6 +1700,11 @@
             li.appendChild(deleteBtn);
             
             listElement.appendChild(li);
+            
+            // If item is already checked, trigger the change event to show price input
+            if (item.checked) {
+                checkbox.dispatchEvent(new Event('change'));
+            }
         }
 
         // Add item to store
@@ -1401,9 +1735,7 @@
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             };
             
-            if (remarks) {
-                newItem.remarks = remarks;
-            }
+            if (remarks) newItem.remarks = remarks;
             
             const newItemRef = database.ref('users/' + userId + '/items/' + storeId).push();
             newItemRef.set(newItem)
@@ -1453,6 +1785,145 @@
                     console.error("Error clearing items:", error);
                     alert("Error clearing items: " + error.message);
                 });
+        }
+
+        // Show add store modal
+        function showAddStoreModal() {
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.right = '0';
+            modal.style.bottom = '0';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.zIndex = '1000';
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.backgroundColor = 'var(--container-bg)';
+            modalContent.style.padding = '20px';
+            modalContent.style.borderRadius = '12px';
+            modalContent.style.width = '90%';
+            modalContent.style.maxWidth = '400px';
+            modalContent.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+            
+            const title = document.createElement('h3');
+            title.textContent = 'Add New Store';
+            title.style.marginTop = '0';
+            modalContent.appendChild(title);
+            
+            const formGroup = document.createElement('div');
+            formGroup.style.display = 'flex';
+            formGroup.style.gap = '10px';
+            
+            const storeSelect = document.createElement('select');
+            storeSelect.id = 'modal-store-preset';
+            storeSelect.style.flex = '1';
+            
+            const optionDefault = document.createElement('option');
+            optionDefault.value = '';
+            optionDefault.textContent = 'Select a store';
+            storeSelect.appendChild(optionDefault);
+            
+            for (const [id, store] of Object.entries(stores)) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = store.name;
+                storeSelect.appendChild(option);
+            }
+            
+            const optionCustom = document.createElement('option');
+            optionCustom.value = 'custom';
+            optionCustom.textContent = 'Custom Store';
+            storeSelect.appendChild(optionCustom);
+            
+            formGroup.appendChild(storeSelect);
+            
+            const customInput = document.createElement('input');
+            customInput.type = 'text';
+            customInput.id = 'modal-store-custom';
+            customInput.placeholder = 'Store name';
+            customInput.style.display = 'none';
+            customInput.style.flex = '1';
+            formGroup.appendChild(customInput);
+            
+            modalContent.appendChild(formGroup);
+            
+            const buttonGroup = document.createElement('div');
+            buttonGroup.style.display = 'flex';
+            buttonGroup.style.gap = '10px';
+            buttonGroup.style.marginTop = '20px';
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.flex = '1';
+            cancelBtn.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            buttonGroup.appendChild(cancelBtn);
+            
+            const addBtn = document.createElement('button');
+            addBtn.textContent = 'Add';
+            addBtn.style.flex = '1';
+            addBtn.addEventListener('click', () => {
+                addStoreFromModal();
+                document.body.removeChild(modal);
+            });
+            buttonGroup.appendChild(addBtn);
+            
+            modalContent.appendChild(buttonGroup);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Store selection handler
+            storeSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    customInput.style.display = 'block';
+                    customInput.focus();
+                } else {
+                    customInput.style.display = 'none';
+                }
+            });
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+            
+            function addStoreFromModal() {
+                const preset = storeSelect.value;
+                const customName = customInput.value.trim();
+                
+                if (preset === '' || (preset === 'custom' && !customName)) {
+                    showNotification("Please select or enter a store name");
+                    return;
+                }
+                
+                const userId = auth.currentUser?.uid;
+                if (!userId) return;
+                
+                const storeData = {
+                    name: preset === 'custom' ? customName : stores[preset].name,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                if (preset !== 'custom') {
+                    storeData.logo = stores[preset].logo;
+                }
+                
+                database.ref('users/' + userId + '/stores').push().set(storeData)
+                    .then(() => {
+                        showNotification("Store added successfully!");
+                    })
+                    .catch(error => {
+                        console.error("Error adding store:", error);
+                        showNotification("Error adding store. Please try again.");
+                    });
+            }
         }
     </script>
 </body>
