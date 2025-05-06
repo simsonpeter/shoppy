@@ -879,6 +879,8 @@
         </div>
     </div>
 
+    <!-- Pending Shares Modal (dynamically created) -->
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -1072,45 +1074,6 @@
             });
         }
 
-        // Share list with another user
-        function shareList() {
-            const email = shareEmail.value.trim();
-            const message = shareMessage.value.trim();
-            
-            if (!email) {
-                showNotification("Please enter recipient's email");
-                return;
-            }
-            
-            if (!validateEmail(email)) {
-                showNotification("Please enter a valid email address");
-                return;
-            }
-            
-            const userId = auth.currentUser?.uid;
-            if (!userId) return;
-            
-            // In a real implementation, you would:
-            // 1. Verify the recipient exists in your system
-            // 2. Create a shared list reference
-            // 3. Send an email notification
-            
-            // This is just a mock implementation
-            database.ref('sharedLists').push().set({
-                senderId: userId,
-                senderEmail: auth.currentUser.email,
-                recipientEmail: email,
-                message: message,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                hideModal(shareModal);
-                showNotification("List shared successfully!");
-            }).catch(error => {
-                console.error("Error sharing list:", error);
-                showNotification("Error sharing list. Please try again.");
-            });
-        }
-
         // Validate email
         function validateEmail(email) {
             const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1157,6 +1120,10 @@
                 listContainer.style.display = 'block';
                 loadUserStores(user.uid);
                 loadChatMessages();
+                
+                // Load shared lists and check for pending shares
+                loadSharedLists(user.uid);
+                checkPendingShares(user.email);
             } else {
                 // No user signed in
                 authContainer.style.display = 'block';
@@ -1295,19 +1262,21 @@
                     }
                     
                     const nameSpan = document.createElement('span');
-                    nameSpan.textContent = store.name;
+                    nameSpan.textContent = store.shared ? 'Shared: ' + store.name : store.name;
                     tab.appendChild(nameSpan);
 
-                    // Add delete button to store tab
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-store-btn';
-                    deleteBtn.innerHTML = '×';
-                    deleteBtn.title = 'Delete Store';
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Prevent tab switching
-                        deleteStore(storeId, store.name);
-                    });
-                    tab.appendChild(deleteBtn);
+                    // Only show delete button for non-shared stores
+                    if (!store.shared) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-store-btn';
+                        deleteBtn.innerHTML = '×';
+                        deleteBtn.title = 'Delete Store';
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent tab switching
+                            deleteStore(storeId, store.name);
+                        });
+                        tab.appendChild(deleteBtn);
+                    }
                     
                     tab.addEventListener('click', () => {
                         document.querySelectorAll('.store-tab').forEach(t => t.classList.remove('active'));
@@ -1360,95 +1329,109 @@
                     itemList.appendChild(list);
                     content.appendChild(itemList);
                     
-                    // Add item form
-                    const addForm = document.createElement('div');
-                    addForm.className = 'add-item-form';
+                    // Add item form (only for non-shared stores)
+                    if (!store.shared) {
+                        const addForm = document.createElement('div');
+                        addForm.className = 'add-item-form';
+                        
+                        const formRow1 = document.createElement('div');
+                        formRow1.className = 'form-row';
+                        
+                        const itemGroup = document.createElement('div');
+                        itemGroup.className = 'form-group';
+                        
+                        const itemInput = document.createElement('input');
+                        itemInput.type = 'text';
+                        itemInput.placeholder = 'Item name';
+                        itemInput.dataset.storeId = storeId;
+                        
+                        itemGroup.appendChild(itemInput);
+                        formRow1.appendChild(itemGroup);
+                        
+                        const quantityGroup = document.createElement('div');
+                        quantityGroup.className = 'form-group';
+                        
+                        const quantityInput = document.createElement('input');
+                        quantityInput.type = 'number';
+                        quantityInput.placeholder = 'Qty';
+                        quantityInput.min = '1';
+                        quantityInput.value = '1';
+                        quantityInput.dataset.storeId = storeId;
+                        
+                        quantityGroup.appendChild(quantityInput);
+                        formRow1.appendChild(quantityGroup);
+                        
+                        addForm.appendChild(formRow1);
+                        
+                        const formRow2 = document.createElement('div');
+                        formRow2.className = 'form-row';
+                        
+                        const remarksGroup = document.createElement('div');
+                        remarksGroup.className = 'form-group';
+                        
+                        const remarksInput = document.createElement('input');
+                        remarksInput.type = 'text';
+                        remarksInput.placeholder = 'Remarks';
+                        remarksInput.dataset.storeId = storeId;
+                        
+                        remarksGroup.appendChild(remarksInput);
+                        formRow2.appendChild(remarksGroup);
+                        
+                        addForm.appendChild(formRow2);
+                        
+                        const formRow3 = document.createElement('div');
+                        formRow3.className = 'form-row';
+                        
+                        const buttonGroup = document.createElement('div');
+                        buttonGroup.className = 'form-group';
+                        
+                        const addBtn = document.createElement('button');
+                        addBtn.textContent = 'Add';
+                        addBtn.dataset.storeId = storeId;
+                        
+                        buttonGroup.appendChild(addBtn);
+                        formRow3.appendChild(buttonGroup);
+                        
+                        addForm.appendChild(formRow3);
+                        content.appendChild(addForm);
+                    }
                     
-                    const formRow1 = document.createElement('div');
-                    formRow1.className = 'form-row';
+                    // Clear all button (only for non-shared stores)
+                    if (!store.shared) {
+                        const clearBtn = document.createElement('button');
+                        clearBtn.className = 'clear-all-btn';
+                        clearBtn.textContent = 'Clear All Items';
+                        clearBtn.dataset.storeId = storeId;
+                        content.appendChild(clearBtn);
+                        
+                        clearBtn.addEventListener('click', () => {
+                            if (confirm(`Clear all items from ${store.name}?`)) {
+                                clearAllItems(userId, storeId);
+                            }
+                        });
+                    }
                     
-                    const itemGroup = document.createElement('div');
-                    itemGroup.className = 'form-group';
-                    
-                    const itemInput = document.createElement('input');
-                    itemInput.type = 'text';
-                    itemInput.placeholder = 'Item name';
-                    itemInput.dataset.storeId = storeId;
-                    
-                    itemGroup.appendChild(itemInput);
-                    formRow1.appendChild(itemGroup);
-                    
-                    const quantityGroup = document.createElement('div');
-                    quantityGroup.className = 'form-group';
-                    
-                    const quantityInput = document.createElement('input');
-                    quantityInput.type = 'number';
-                    quantityInput.placeholder = 'Qty';
-                    quantityInput.min = '1';
-                    quantityInput.value = '1';
-                    quantityInput.dataset.storeId = storeId;
-                    
-                    quantityGroup.appendChild(quantityInput);
-                    formRow1.appendChild(quantityGroup);
-                    
-                    addForm.appendChild(formRow1);
-                    
-                    const formRow2 = document.createElement('div');
-                    formRow2.className = 'form-row';
-                    
-                    const remarksGroup = document.createElement('div');
-                    remarksGroup.className = 'form-group';
-                    
-                    const remarksInput = document.createElement('input');
-                    remarksInput.type = 'text';
-                    remarksInput.placeholder = 'Remarks';
-                    remarksInput.dataset.storeId = storeId;
-                    
-                    remarksGroup.appendChild(remarksInput);
-                    formRow2.appendChild(remarksGroup);
-                    
-                    addForm.appendChild(formRow2);
-                    
-                    const formRow3 = document.createElement('div');
-                    formRow3.className = 'form-row';
-                    
-                    const buttonGroup = document.createElement('div');
-                    buttonGroup.className = 'form-group';
-                    
-                    const addBtn = document.createElement('button');
-                    addBtn.textContent = 'Add';
-                    addBtn.dataset.storeId = storeId;
-                    
-                    buttonGroup.appendChild(addBtn);
-                    formRow3.appendChild(buttonGroup);
-                    
-                    addForm.appendChild(formRow3);
-                    content.appendChild(addForm);
-                    
-                    // Clear all button
-                    const clearBtn = document.createElement('button');
-                    clearBtn.className = 'clear-all-btn';
-                    clearBtn.textContent = 'Clear All Items';
-                    clearBtn.dataset.storeId = storeId;
-                    content.appendChild(clearBtn);
+                    // Add event listeners for this store (only for non-shared stores)
+                    if (!store.shared) {
+                        const addBtn = content.querySelector('button[data-store-id]');
+                        const itemInput = content.querySelector('input[placeholder="Item name"]');
+                        const quantityInput = content.querySelector('input[placeholder="Qty"]');
+                        const remarksInput = content.querySelector('input[placeholder="Remarks"]');
+                        
+                        if (addBtn && itemInput && quantityInput) {
+                            addBtn.addEventListener('click', () => addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput));
+                            itemInput.addEventListener('keypress', (e) => {
+                                if (e.key === 'Enter') {
+                                    addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput);
+                                }
+                            });
+                        }
+                    }
                     
                     storeContentsContainer.appendChild(content);
                     
                     // Load items for this store
                     loadStoreItems(userId, storeId);
-                    
-                    // Event listeners for this store
-                    addBtn.addEventListener('click', () => addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput));
-                    itemInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') {
-                            addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput);
-                        }
-                    });
-                    clearBtn.addEventListener('click', () => {
-                        if (confirm(`Clear all items from ${store.name}?`)) {
-                            clearAllItems(userId, storeId);
-                        }
-                    });
                     
                     firstStore = false;
                 });
@@ -1711,7 +1694,7 @@
         function addItemToStore(userId, storeId, itemInput, quantityInput, remarksInput) {
             const text = itemInput.value.trim();
             const quantity = parseInt(quantityInput.value) || 1;
-            const remarks = remarksInput.value.trim();
+            const remarks = remarksInput?.value.trim() || '';
             
             if (!text) {
                 alert("Please enter an item name");
@@ -1742,7 +1725,7 @@
                 .then(() => {
                     itemInput.value = '';
                     quantityInput.value = '1';
-                    remarksInput.value = '';
+                    if (remarksInput) remarksInput.value = '';
                     itemInput.focus();
                 })
                 .catch(error => {
@@ -1790,113 +1773,48 @@
         // Show add store modal
         function showAddStoreModal() {
             const modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.right = '0';
-            modal.style.bottom = '0';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-            modal.style.display = 'flex';
-            modal.style.justifyContent = 'center';
-            modal.style.alignItems = 'center';
-            modal.style.zIndex = '1000';
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Add New Store</h3>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="modal-store-preset">Store</label>
+                            <select id="modal-store-preset" class="form-control">
+                                <option value="">Select a store</option>
+                                ${Object.entries(stores).map(([id, store]) => `
+                                    <option value="${id}">${store.name}</option>
+                                `).join('')}
+                                <option value="custom">Custom Store</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="custom-store-group" style="display: none;">
+                            <label for="modal-store-custom">Custom Store Name</label>
+                            <input type="text" id="modal-store-custom" placeholder="Enter store name">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="modal-cancel-btn">Cancel</button>
+                        <button id="modal-add-btn">Add Store</button>
+                    </div>
+                </div>
+            `;
             
-            const modalContent = document.createElement('div');
-            modalContent.style.backgroundColor = 'var(--container-bg)';
-            modalContent.style.padding = '20px';
-            modalContent.style.borderRadius = '12px';
-            modalContent.style.width = '90%';
-            modalContent.style.maxWidth = '400px';
-            modalContent.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
-            
-            const title = document.createElement('h3');
-            title.textContent = 'Add New Store';
-            title.style.marginTop = '0';
-            modalContent.appendChild(title);
-            
-            const formGroup = document.createElement('div');
-            formGroup.style.display = 'flex';
-            formGroup.style.gap = '10px';
-            
-            const storeSelect = document.createElement('select');
-            storeSelect.id = 'modal-store-preset';
-            storeSelect.style.flex = '1';
-            
-            const optionDefault = document.createElement('option');
-            optionDefault.value = '';
-            optionDefault.textContent = 'Select a store';
-            storeSelect.appendChild(optionDefault);
-            
-            for (const [id, store] of Object.entries(stores)) {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = store.name;
-                storeSelect.appendChild(option);
-            }
-            
-            const optionCustom = document.createElement('option');
-            optionCustom.value = 'custom';
-            optionCustom.textContent = 'Custom Store';
-            storeSelect.appendChild(optionCustom);
-            
-            formGroup.appendChild(storeSelect);
-            
-            const customInput = document.createElement('input');
-            customInput.type = 'text';
-            customInput.id = 'modal-store-custom';
-            customInput.placeholder = 'Store name';
-            customInput.style.display = 'none';
-            customInput.style.flex = '1';
-            formGroup.appendChild(customInput);
-            
-            modalContent.appendChild(formGroup);
-            
-            const buttonGroup = document.createElement('div');
-            buttonGroup.style.display = 'flex';
-            buttonGroup.style.gap = '10px';
-            buttonGroup.style.marginTop = '20px';
-            
-            const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = 'Cancel';
-            cancelBtn.style.flex = '1';
-            cancelBtn.addEventListener('click', () => {
-                document.body.removeChild(modal);
-            });
-            buttonGroup.appendChild(cancelBtn);
-            
-            const addBtn = document.createElement('button');
-            addBtn.textContent = 'Add';
-            addBtn.style.flex = '1';
-            addBtn.addEventListener('click', () => {
-                addStoreFromModal();
-                document.body.removeChild(modal);
-            });
-            buttonGroup.appendChild(addBtn);
-            
-            modalContent.appendChild(buttonGroup);
-            modal.appendChild(modalContent);
             document.body.appendChild(modal);
             
             // Store selection handler
-            storeSelect.addEventListener('change', (e) => {
-                if (e.target.value === 'custom') {
-                    customInput.style.display = 'block';
-                    customInput.focus();
-                } else {
-                    customInput.style.display = 'none';
-                }
+            modal.querySelector('#modal-store-preset').addEventListener('change', (e) => {
+                const customGroup = modal.querySelector('#custom-store-group');
+                customGroup.style.display = e.target.value === 'custom' ? 'block' : 'none';
             });
             
-            // Close modal when clicking outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    document.body.removeChild(modal);
-                }
-            });
-            
-            function addStoreFromModal() {
-                const preset = storeSelect.value;
-                const customName = customInput.value.trim();
+            // Add button handler
+            modal.querySelector('#modal-add-btn').addEventListener('click', () => {
+                const preset = modal.querySelector('#modal-store-preset').value;
+                const customName = modal.querySelector('#modal-store-custom').value.trim();
                 
                 if (preset === '' || (preset === 'custom' && !customName)) {
                     showNotification("Please select or enter a store name");
@@ -1917,13 +1835,203 @@
                 
                 database.ref('users/' + userId + '/stores').push().set(storeData)
                     .then(() => {
+                        document.body.removeChild(modal);
                         showNotification("Store added successfully!");
                     })
                     .catch(error => {
                         console.error("Error adding store:", error);
                         showNotification("Error adding store. Please try again.");
                     });
+            });
+            
+            // Cancel button handler
+            modal.querySelector('#modal-cancel-btn').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+        }
+
+        // Share list with another user
+        function shareList() {
+            const email = shareEmail.value.trim();
+            const message = shareMessage.value.trim();
+            
+            if (!email) {
+                showNotification("Please enter recipient's email");
+                return;
             }
+            
+            if (!validateEmail(email)) {
+                showNotification("Please enter a valid email address");
+                return;
+            }
+            
+            if (!currentStoreId) {
+                showNotification("Please select a store to share");
+                return;
+            }
+            
+            const userId = auth.currentUser?.uid;
+            if (!userId) return;
+            
+            // First check if the recipient exists
+            auth.fetchSignInMethodsForEmail(email)
+                .then((signInMethods) => {
+                    if (signInMethods.length === 0) {
+                        // Recipient doesn't exist yet
+                        if (confirm("This user doesn't have an account yet. Send them an invitation?")) {
+                            return sendInvitation(email, userId, currentStoreId, message);
+                        }
+                        return Promise.reject("Recipient doesn't have an account");
+                    }
+                    
+                    // Recipient exists - create the share record
+                    return database.ref('sharedLists').push().set({
+                        senderId: userId,
+                        senderEmail: auth.currentUser.email,
+                        recipientEmail: email,
+                        storeId: currentStoreId,
+                        message: message || `${auth.currentUser.email} shared a list with you`,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        status: 'pending'
+                    });
+                })
+                .then(() => {
+                    hideModal(shareModal);
+                    showNotification("List shared successfully!");
+                })
+                .catch(error => {
+                    console.error("Error sharing list:", error);
+                    showNotification(error.message || "Error sharing list. Please try again.");
+                });
+        }
+
+        // Send invitation to non-user
+        function sendInvitation(email, senderId, storeId, message) {
+            // In a real app, you would send an email with a signup link
+            // This is a simplified version
+            
+            return database.ref('invitations').push().set({
+                senderId: senderId,
+                recipientEmail: email,
+                storeId: storeId,
+                message: message || "You've been invited to join Jayatha's Shoppy App",
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
+        // Load lists shared with current user
+        function loadSharedLists(userId) {
+            database.ref('sharedLists').orderByChild('recipientEmail').equalTo(auth.currentUser.email)
+                .on('value', snapshot => {
+                    const shares = snapshot.val() || {};
+                    
+                    // Add shared stores to the user's store list
+                    Object.keys(shares).forEach(shareId => {
+                        const share = shares[shareId];
+                        
+                        if (share.status !== 'accepted') return;
+                        
+                        // Check if we already have this store
+                        database.ref(`users/${userId}/stores/${share.storeId}`).once('value')
+                            .then(storeSnapshot => {
+                                if (!storeSnapshot.exists()) {
+                                    // Add the shared store to user's stores
+                                    database.ref(`users/${userId}/stores/${share.storeId}`).set({
+                                        name: `Shared: ${share.storeId}`,
+                                        shared: true,
+                                        sharedBy: share.senderEmail,
+                                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                                    });
+                                }
+                            });
+                    });
+                });
+        }
+
+        // Check for pending shares
+        function checkPendingShares(email) {
+            database.ref('sharedLists').orderByChild('recipientEmail').equalTo(email)
+                .once('value')
+                .then(snapshot => {
+                    const shares = snapshot.val() || {};
+                    const pendingShares = Object.keys(shares).filter(shareId => 
+                        shares[shareId].status === 'pending'
+                    );
+                    
+                    if (pendingShares.length > 0) {
+                        showNotification(`You have ${pendingShares.length} pending list shares`);
+                        // Show a modal with pending shares
+                        showPendingSharesModal(pendingShares, shares);
+                    }
+                });
+        }
+
+        // Show modal with pending shares
+        function showPendingSharesModal(shareIds, shares) {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Pending List Shares</h3>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>You have been shared these shopping lists:</p>
+                        <ul id="pending-shares-list" style="list-style: none; padding: 0; margin: 15px 0;">
+                            ${shareIds.map(shareId => `
+                                <li style="padding: 10px; border-bottom: 1px solid var(--border-color);">
+                                    <strong>${shares[shareId].senderEmail}</strong>
+                                    <p>${shares[shareId].message}</p>
+                                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                        <button data-share-id="${shareId}" class="accept-share-btn" style="flex: 1;">Accept</button>
+                                        <button data-share-id="${shareId}" class="decline-share-btn" style="flex: 1; background: var(--danger-color);">Decline</button>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close modal
+            modal.querySelector('.modal-close').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            
+            // Handle accept/decline
+            modal.querySelectorAll('.accept-share-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const shareId = btn.dataset.shareId;
+                    database.ref(`sharedLists/${shareId}`).update({ status: 'accepted' })
+                        .then(() => {
+                            showNotification("List accepted!");
+                            document.body.removeChild(modal);
+                            // Refresh the view
+                            if (currentUser) loadUserStores(currentUser.uid);
+                        });
+                });
+            });
+            
+            modal.querySelectorAll('.decline-share-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const shareId = btn.dataset.shareId;
+                    database.ref(`sharedLists/${shareId}`).remove()
+                        .then(() => {
+                            showNotification("List declined");
+                            document.body.removeChild(modal);
+                        });
+                });
+            });
         }
     </script>
 </body>
